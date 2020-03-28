@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Info Covid19</string>
+    <string name="state_name">Rajasthan</string>
+    <string name="todo">TODO</string>
+    <string name="confirmed"><b>Confirmed</b></string>
+    <string name="india">INDIA</string>
+    <string name="states_ut">STATES/UT:</string>
+    <string name="info_covid19_tracker">INFO COVID19 TRACKER</string>
+</resources>
