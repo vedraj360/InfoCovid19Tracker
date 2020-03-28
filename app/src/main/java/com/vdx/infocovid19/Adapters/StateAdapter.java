@@ -4,12 +4,12 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -47,6 +47,10 @@ public class StateAdapter extends RecyclerView.Adapter<StateAdapter.ViewHolder> 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Statewise statewise = statewiseArrayList.get(position);
+
+        //holder.info_card.setAnimation(AnimationUtils.loadAnimation(context, R.anim.up_bottom_transition_animation));/
+        holder.expandable_view.setAnimation(AnimationUtils.loadAnimation(context, R.anim.fade_transition_animation));
+
         holder.state_name.setText(statewise.getState());
 
         boolean isExpanded = statewise.isExpanded();
@@ -62,6 +66,9 @@ public class StateAdapter extends RecyclerView.Adapter<StateAdapter.ViewHolder> 
         } else if (statewise.getDiff() < 0) {
             holder.increased_image.setImageResource(R.drawable.down);
             holder.confirmed_increased.setText(String.valueOf(statewise.getDiff()));
+        } else {
+            holder.increased_image.setVisibility(View.GONE);
+            holder.confirmed_increased.setText("");
         }
     }
 
@@ -106,6 +113,7 @@ public class StateAdapter extends RecyclerView.Adapter<StateAdapter.ViewHolder> 
         TextView state_name, confirmed_current, active_current, recovered_current, dead_current, confirmed_increased;
         LinearLayout expandable_view;
         ImageView increased_image;
+        LinearLayout info_card;
 
         ViewHolder(@NonNull final View view) {
             super(view);
@@ -118,6 +126,7 @@ public class StateAdapter extends RecyclerView.Adapter<StateAdapter.ViewHolder> 
             dead_current = view.findViewById(R.id.dead_current);
             confirmed_increased = view.findViewById(R.id.confirmed_increased);
             increased_image = view.findViewById(R.id.increased_image);
+            info_card = view.findViewById(R.id.info_card);
 
             setTextFont(view);
 
@@ -129,8 +138,6 @@ public class StateAdapter extends RecyclerView.Adapter<StateAdapter.ViewHolder> 
                     clickListener.onClick(getAdapterPosition(), statewise, view);
                 }
             });
-
-
         }
 
         private void setTextFont(View view) {

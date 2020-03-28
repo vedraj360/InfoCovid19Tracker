@@ -3,14 +3,18 @@ package com.vdx.infocovid19;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
+import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -22,7 +26,6 @@ import com.google.gson.Gson;
 import com.vdx.infocovid19.Adapters.StateAdapter;
 import com.vdx.infocovid19.Models.ApiModel;
 import com.vdx.infocovid19.Models.History;
-import com.vdx.infocovid19.Models.HistoryData;
 import com.vdx.infocovid19.Models.HistoryModel;
 import com.vdx.infocovid19.Models.Statewise;
 import com.vdx.infocovid19.Models.Total;
@@ -53,6 +56,9 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
     private SearchView searchView;
     private ArrayList<History> history;
     private ArrayList<Statewise> currentDataList;
+    private LinearLayout main_anim;
+    private NestedScrollView scrollView;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,9 +79,18 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
         country_confirmed_increased = findViewById(R.id.country_confirmed_increased);
         country_recovered_increased = findViewById(R.id.country_recovered_increased);
         country_dead_increased = findViewById(R.id.country_dead_increased);
+        main_anim = findViewById(R.id.main_anim);
+        scrollView = findViewById(R.id.nested_scroll);
+
     }
 
     private void setRecyclerView() {
+        // rotateLoading.stop();
+
+        main_anim.setVisibility(View.VISIBLE);
+        scrollView.setVisibility(View.VISIBLE);
+        main_anim.setAnimation(AnimationUtils.loadAnimation(context, R.anim.up_bottom_transition_animation_d));
+        scrollView.setAnimation(AnimationUtils.loadAnimation(context, R.anim.up_bottom_transition_animation_d));
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setHasFixedSize(true);
         stateAdapter = new StateAdapter(currentDataList, getApplicationContext(), this);
@@ -109,22 +124,18 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
 
 
     private void getHistoryResponse() {
+        final Handler handler = new Handler();
         history = new ArrayList<>();
         StringRequest request = new StringRequest(Request.Method.GET, URLS.UnOfficialHistoryApi, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
 
                 Gson gson = new Gson();
-//                History[] history = gson.fromJson(response, History[].class);
-//                Log.e(TAG, "onResponse: " + history[history.length - 1].getDay());
-
                 historyModel = gson.fromJson(response, HistoryModel.class);
                 history = historyModel.getData().getHistory();
                 setTotalCount();
                 sortHistory();
                 setRecyclerView();
-
-
             }
         }, new Response.ErrorListener() {
             @Override
@@ -156,11 +167,14 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
                 return o1.getState().compareTo(o2.getState());
             }
         });
-        Log.e(TAG, "sortHistory: " + currentDataList.get(0).getState());
-        Log.e(TAG, "sortHistory: " + s2.get(0).getState());
+
         for (int i = 0; i < currentDataList.size(); i++) {
             long diff = currentDataList.get(i).getConfirmed() - s2.get(i).getConfirmed();
             currentDataList.get(i).setDiff(diff);
+        }
+
+        for (Statewise statewise : currentDataList) {
+            Log.e(TAG, "sortHistory: " + statewise.getState() + " " + statewise.getDiff());
         }
 
         Collections.sort(currentDataList, new Comparator<Statewise>() {
@@ -174,6 +188,10 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
                 return 0;
             }
         });
+
+        for (Statewise statewise : currentDataList) {
+            Log.e(TAG, "sortHistory: 1  " + statewise.getState() + " " + statewise.getDiff());
+        }
     }
 
 
@@ -278,6 +296,7 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
         if (!searchView.isIconified()) {
             hideKeyboard();
         }
+
         stateAdapter.notifyItemChanged(position);
         recyclerView.smoothScrollToPosition(position);
     }
