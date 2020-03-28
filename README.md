@@ -23,6 +23,9 @@ Some ScreenShots
 ### Demo
 ![demo](https://github.com/vedraj360/InfoCovid19Tracker/blob/master/screenshots/demo.gif)
 
+### Download
+![infoCovid](https://github.com/vedraj360/InfoCovid19Tracker/tree/master/app/release/sample.apk)
+
 ## For contributors
 
 If you  want to contribute then just send the pull request.
