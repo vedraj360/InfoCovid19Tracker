@@ -21,7 +21,7 @@ Some ScreenShots
 </p>
 
 ### Demo
-![demo](https://github.com/vedraj360/InfoCovid19Tracker/blob/master/demo.gif")
+![demo.gif](https://github.com/vedraj360/InfoCovid19Tracker/blob/master/demo.gif")
 
 ## For contributors
 
