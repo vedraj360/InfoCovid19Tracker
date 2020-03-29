@@ -2,9 +2,15 @@
   <dictionary name="Ved">
     <words>
       <w>arsb</w>
+      <w>confirmeddelta</w>
+      <w>counterforautotimeupdate</w>
       <w>covid</w>
+      <w>deceaseddelta</w>
       <w>infocovid</w>
+      <w>lastupdatedtime</w>
       <w>rajasthan</w>
+      <w>recovereddelta</w>
+      <w>statesdelta</w>
       <w>statewise</w>
     </words>
   </dictionary>

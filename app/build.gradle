@@ -43,5 +43,9 @@ dependencies {
     implementation 'com.android.volley:volley:1.1.1'
     implementation 'com.google.code.gson:gson:2.8.6'
 
+    implementation 'com.dinuscxj:recyclerrefreshlayout:2.0.5'
+
+    implementation 'com.baoyz.pullrefreshlayout:library:1.2.0'
+
 
 }

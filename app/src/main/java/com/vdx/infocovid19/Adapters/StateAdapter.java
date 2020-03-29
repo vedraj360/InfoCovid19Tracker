@@ -14,7 +14,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.vdx.infocovid19.Models.Statewise;
+import com.vdx.infocovid19.Models.NewApiModels.Delta;
+import com.vdx.infocovid19.Models.NewApiModels.States;
 import com.vdx.infocovid19.R;
 import com.vdx.infocovid19.Utils.FontChangeCrawler;
 import com.vdx.infocovid19.Utils.Helper;
@@ -23,12 +24,12 @@ import java.util.ArrayList;
 
 public class StateAdapter extends RecyclerView.Adapter<StateAdapter.ViewHolder> implements Filterable {
 
-    private ArrayList<Statewise> statewiseArrayList;
-    private ArrayList<Statewise> statewiseFilteredList;
+    private ArrayList<States> statewiseArrayList;
+    private ArrayList<States> statewiseFilteredList;
     private Context context;
     private setOnClickListener clickListener;
 
-    public StateAdapter(ArrayList<Statewise> statewiseArrayList, Context context, setOnClickListener clickListener) {
+    public StateAdapter(ArrayList<States> statewiseArrayList, Context context, setOnClickListener clickListener) {
         this.statewiseArrayList = statewiseArrayList;
         this.context = context;
         this.clickListener = clickListener;
@@ -46,7 +47,9 @@ public class StateAdapter extends RecyclerView.Adapter<StateAdapter.ViewHolder> 
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Statewise statewise = statewiseArrayList.get(position);
+
+        States statewise = statewiseArrayList.get(position);
+        Delta delta = statewise.getDelta();
 
         //holder.info_card.setAnimation(AnimationUtils.loadAnimation(context, R.anim.up_bottom_transition_animation));/
         holder.expandable_view.setAnimation(AnimationUtils.loadAnimation(context, R.anim.fade_transition_animation));
@@ -56,16 +59,17 @@ public class StateAdapter extends RecyclerView.Adapter<StateAdapter.ViewHolder> 
         boolean isExpanded = statewise.isExpanded();
         holder.expandable_view.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
 
+        if (holder.expandable_view.getVisibility() != View.VISIBLE) {
+            statewise.setExpanded(false);
+        }
+
         holder.confirmed_current.setText(String.valueOf(statewise.getConfirmed()));
         holder.active_current.setText(String.valueOf(statewise.getActive()));
         holder.recovered_current.setText(String.valueOf(statewise.getRecovered()));
         holder.dead_current.setText(String.valueOf(statewise.getDeaths()));
-        if (statewise.getDiff() > 0) {
+        if (delta.getConfirmed() > 0) {
             holder.increased_image.setVisibility(View.VISIBLE);
-            holder.confirmed_increased.setText(String.valueOf(statewise.getDiff()));
-        } else if (statewise.getDiff() < 0) {
-            holder.increased_image.setImageResource(R.drawable.down);
-            holder.confirmed_increased.setText(String.valueOf(statewise.getDiff()));
+            holder.confirmed_increased.setText(String.valueOf(delta.getConfirmed()));
         } else {
             holder.increased_image.setVisibility(View.GONE);
             holder.confirmed_increased.setText("");
@@ -81,14 +85,14 @@ public class StateAdapter extends RecyclerView.Adapter<StateAdapter.ViewHolder> 
     public Filter getFilter() {
         return new Filter() {
 
-            ArrayList<Statewise> filteredList = new ArrayList<>();
+            ArrayList<States> filteredList = new ArrayList<>();
 
             @Override
             protected FilterResults performFiltering(CharSequence constraint) {
                 if (constraint.toString().isEmpty()) {
                     filteredList.addAll(statewiseFilteredList);
                 } else {
-                    for (Statewise statewise : statewiseFilteredList) {
+                    for (States statewise : statewiseFilteredList) {
                         if (statewise.getState().toLowerCase().trim().contains(constraint.toString().toLowerCase())) {
                             filteredList.add(statewise);
                         }
@@ -103,7 +107,7 @@ public class StateAdapter extends RecyclerView.Adapter<StateAdapter.ViewHolder> 
             @Override
             protected void publishResults(CharSequence constraint, FilterResults results) {
                 statewiseArrayList.clear();
-                statewiseArrayList.addAll((ArrayList<Statewise>) results.values);
+                statewiseArrayList.addAll((ArrayList<States>) results.values);
                 notifyDataSetChanged();
             }
         };
@@ -133,7 +137,7 @@ public class StateAdapter extends RecyclerView.Adapter<StateAdapter.ViewHolder> 
             state_name.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Statewise statewise = statewiseArrayList.get(getAdapterPosition());
+                    States statewise = statewiseArrayList.get(getAdapterPosition());
                     if (clickListener == null) return;
                     clickListener.onClick(getAdapterPosition(), statewise, view);
                 }
@@ -158,7 +162,7 @@ public class StateAdapter extends RecyclerView.Adapter<StateAdapter.ViewHolder> 
 
 
     public interface setOnClickListener {
-        public void onClick(int position, Statewise statewise, View view);
+        public void onClick(int position, States statewise, View view);
     }
 
 

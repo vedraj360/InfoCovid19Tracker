@@ -2,6 +2,7 @@ package com.vdx.infocovid19;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -11,6 +12,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -22,13 +24,16 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
+import com.baoyz.widget.PullRefreshLayout;
+import com.dinuscxj.refresh.RecyclerRefreshLayout;
 import com.google.gson.Gson;
 import com.vdx.infocovid19.Adapters.StateAdapter;
-import com.vdx.infocovid19.Models.ApiModel;
 import com.vdx.infocovid19.Models.History;
 import com.vdx.infocovid19.Models.HistoryModel;
+import com.vdx.infocovid19.Models.NewApiModels.KeyValue;
+import com.vdx.infocovid19.Models.NewApiModels.ModelAPI;
+import com.vdx.infocovid19.Models.NewApiModels.States;
 import com.vdx.infocovid19.Models.Statewise;
-import com.vdx.infocovid19.Models.Total;
 import com.vdx.infocovid19.Utils.Helper;
 import com.vdx.infocovid19.Utils.URLS;
 import com.vdx.infocovid19.Utils.VolleySingleton;
@@ -46,27 +51,33 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
 
     private static String TAG = "MainActivity";
     private ArrayList<Statewise> dataArrayList;
+    private ArrayList<States> statesArrayList;
+    private ModelAPI modelAPI;
     private RecyclerView recyclerView;
     private StateAdapter stateAdapter;
-    private ApiModel apiModel;
     private HistoryModel historyModel;
     private Context context;
     private TextView country_confirmed_current, country_active_current, country_recovered_current, country_dead_current;
-    private TextView country_confirmed_increased, country_recovered_increased, country_dead_increased;
+    private TextView country_confirmed_increased, country_recovered_increased, country_dead_increased, updated_time;
     private SearchView searchView;
     private ArrayList<History> history;
     private ArrayList<Statewise> currentDataList;
     private LinearLayout main_anim;
     private NestedScrollView scrollView;
+    private PullRefreshLayout pullRefreshLayout;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        statesArrayList = new ArrayList<>();
         context = this;
         initViews();
-        getHistoryResponse();
+        getResponse();
+
+        refreshRecycler();
+
     }
 
     private void initViews() {
@@ -81,60 +92,56 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
         country_dead_increased = findViewById(R.id.country_dead_increased);
         main_anim = findViewById(R.id.main_anim);
         scrollView = findViewById(R.id.nested_scroll);
+        pullRefreshLayout = findViewById(R.id.v_refresh);
 
+        updated_time = findViewById(R.id.time);
     }
 
     private void setRecyclerView() {
-        // rotateLoading.stop();
-
         main_anim.setVisibility(View.VISIBLE);
         scrollView.setVisibility(View.VISIBLE);
-        main_anim.setAnimation(AnimationUtils.loadAnimation(context, R.anim.up_bottom_transition_animation_d));
+//        main_anim.setAnimation(AnimationUtils.loadAnimation(context, R.anim.up_bottom_transition_animation_d));
         scrollView.setAnimation(AnimationUtils.loadAnimation(context, R.anim.up_bottom_transition_animation_d));
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setHasFixedSize(true);
-        stateAdapter = new StateAdapter(currentDataList, getApplicationContext(), this);
+//        recyclerView.setHasFixedSize(true);
+        ArrayList<States> statesList = statesArrayList;
+        statesList.remove(0);
+        stateAdapter = new StateAdapter(statesList, getApplicationContext(), this);
         recyclerView.setAdapter(stateAdapter);
+        pullRefreshLayout.setRefreshing(false);
+
         search(searchView);
     }
 
-    private void getResponse() {
-        dataArrayList = new ArrayList<>();
-        StringRequest request = new StringRequest(Request.Method.GET, URLS.UnOfficialApi, new Response.Listener<String>() {
+
+    private void refreshRecycler() {
+
+        int[] color = {getResources().getColor(R.color.red_active),
+                getResources().getColor(R.color.green_active),
+                getResources().getColor(R.color.blue),
+                getResources().getColor(R.color.black)};
+        pullRefreshLayout.setColorSchemeColors(color);
+
+        pullRefreshLayout.setRefreshStyle(PullRefreshLayout.STYLE_MATERIAL);
+        pullRefreshLayout.setOnRefreshListener(new PullRefreshLayout.OnRefreshListener() {
             @Override
-            public void onResponse(String response) {
+            public void onRefresh() {
+                pullRefreshLayout.setRefreshing(true);
+                Toast.makeText(context, "REFRESHING", Toast.LENGTH_SHORT).show();
+                getRefreshedResponse();
 
-                Gson gson = new Gson();
-
-                apiModel = gson.fromJson(response, ApiModel.class);
-
-                dataArrayList = apiModel.getData().getStatewise();
-
-
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e(TAG, "onErrorResponse: ", error);
             }
         });
-
-        VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 
-
-    private void getHistoryResponse() {
-        final Handler handler = new Handler();
-        history = new ArrayList<>();
-        StringRequest request = new StringRequest(Request.Method.GET, URLS.UnOfficialHistoryApi, new Response.Listener<String>() {
+    private void getResponse() {
+        StringRequest request = new StringRequest(Request.Method.GET, URLS.newApiData, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-
                 Gson gson = new Gson();
-                historyModel = gson.fromJson(response, HistoryModel.class);
-                history = historyModel.getData().getHistory();
+                modelAPI = gson.fromJson(response, ModelAPI.class);
+                statesArrayList = modelAPI.getState();
                 setTotalCount();
-                sortHistory();
                 setRecyclerView();
             }
         }, new Response.ErrorListener() {
@@ -147,6 +154,103 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 
+    private void getRefreshedResponse() {
+        scrollView.setVisibility(View.GONE);
+
+        StringRequest request = new StringRequest(Request.Method.GET, URLS.newApiData, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Gson gson = new Gson();
+                modelAPI = gson.fromJson(response, ModelAPI.class);
+                statesArrayList = modelAPI.getState();
+                setTotalCount();
+                refreshedRecycler();
+
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e(TAG, "onErrorResponse: ", error);
+            }
+        });
+
+        VolleySingleton.getInstance(this).addToRequestQueue(request);
+    }
+
+    private void refreshedRecycler() {
+        Toast.makeText(context, "REFRESHED", Toast.LENGTH_SHORT).show();
+        final Handler handler = new Handler();
+        scrollView.setVisibility(View.VISIBLE);
+        scrollView.setAnimation(AnimationUtils.loadAnimation(context, R.anim.up_bottom_transition_animation));
+
+        ArrayList<States> statesList = statesArrayList;
+        statesList.remove(0);
+        stateAdapter = new StateAdapter(statesList, getApplicationContext(), this);
+
+        stateAdapter.notifyDataSetChanged();
+
+
+
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                recyclerView.setAdapter(stateAdapter);
+            }
+        }, 100);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                pullRefreshLayout.setRefreshing(false);
+            }
+        }).start();
+
+    }
+
+    private void getHistoryResponse() {
+        history = new ArrayList<>();
+        StringRequest request = new StringRequest(Request.Method.GET, URLS.UnOfficialHistoryApi, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+
+                Gson gson = new Gson();
+                historyModel = gson.fromJson(response, HistoryModel.class);
+                history = historyModel.getData().getHistory();
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e(TAG, "onErrorResponse: ", error);
+            }
+        });
+
+        VolleySingleton.getInstance(this).addToRequestQueue(request);
+    }
+
+    private void sortConfirmedWise() {
+
+        Collections.sort(statesArrayList, new Comparator<States>() {
+            @Override
+            public int compare(States o1, States o2) {
+                long l1, l2;
+                l1 = Long.parseLong(o1.getConfirmed());
+                l2 = Long.parseLong(o2.getConfirmed());
+                if (l1 > l2) {
+                    return -1;
+                } else if (l1 < l2) {
+                    return 1;
+                }
+                return 0;
+            }
+        });
+
+//        for (States state : statesArrayList) {
+//            Log.e(TAG, "sortHistory: 1  " + state.getConfirmed());
+//        }
+    }
+
+    /*
     private void sortHistory() {
 
 
@@ -193,49 +297,93 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
             Log.e(TAG, "sortHistory: 1  " + statewise.getState() + " " + statewise.getDiff());
         }
     }
+     */
 
 
     private void setTotalCount() {
-        setTextFont();
-        Total totalCount = history.get(history.size() - 1).getTotal();
-        Total diffCount = history.get(history.size() - 2).getTotal();
-        long confirm = totalCount.getConfirmed() - diffCount.getConfirmed();
-        long recover = totalCount.getRecovered() - diffCount.getRecovered();
-        long death = totalCount.getDeaths() - diffCount.getDeaths();
 
+        setTextFont();
+        ArrayList<KeyValue> keyValues = new ArrayList<>();
+        keyValues = modelAPI.getKeyValues();
+        States state = statesArrayList.get(0);
+
+        long confirm = Long.parseLong(keyValues.get(0).getConfirmeddelta());
+        long recover = Long.parseLong(keyValues.get(0).getRecovereddelta());
+        long death = Long.parseLong(keyValues.get(0).getDeceaseddelta());
+        String updatedTime = "LAST UPDATED " + timeAgo(state.getLastupdatedtime());
 
         if (confirm > 0) {
-            String s = "+ " + confirm;
+            String s = "+" + confirm;
             country_confirmed_increased.setText(s);
-        } else if (confirm < 0) {
-            String s = "- " + Math.abs(confirm);
-            country_confirmed_increased.setText(s);
+        } else {
+            country_confirmed_increased.setText(" +0 ");
         }
 
         if (recover > 0) {
-            String s = "+ " + Math.abs(recover);
+            String s = "+" + recover;
             country_recovered_increased.setText(s);
-        } else if (recover < 0) {
-            String s = "- " + Math.abs(recover);
-            country_recovered_increased.setText(s);
+        } else {
+            country_recovered_increased.setText(" +0 ");
         }
 
         if (death > 0) {
-            String s = "+ " + Math.abs(death);
+            String s = "+" + death;
             country_dead_increased.setText(s);
-        } else if (death < 0) {
-            String s = "- " + Math.abs(death);
-            country_dead_increased.setText(s);
+        } else {
+            country_dead_increased.setText(" +0 ");
         }
 
 
-        country_confirmed_current.setText(String.valueOf(totalCount.getConfirmed()));
-        country_active_current.setText(String.valueOf(totalCount.getActive()));
-        country_recovered_current.setText(String.valueOf(totalCount.getRecovered()));
-        country_dead_current.setText(String.valueOf(totalCount.getDeaths()));
-
+        country_confirmed_current.setText(String.valueOf(state.getConfirmed()));
+        country_active_current.setText(String.valueOf(state.getActive()));
+        country_recovered_current.setText(String.valueOf(state.getRecovered()));
+        country_dead_current.setText(String.valueOf(state.getDeaths()));
+        updated_time.setText(updatedTime);
 
     }
+
+    /*    private void setTotalCount() {
+            setTextFont();
+            Total totalCount = history.get(history.size() - 1).getTotal();
+            Total diffCount = history.get(history.size() - 2).getTotal();
+            long confirm = totalCount.getConfirmed() - diffCount.getConfirmed();
+            long recover = totalCount.getRecovered() - diffCount.getRecovered();
+            long death = totalCount.getDeaths() - diffCount.getDeaths();
+
+
+            if (confirm > 0) {
+                String s = "+ " + confirm;
+                country_confirmed_increased.setText(s);
+            } else if (confirm < 0) {
+                String s = "- " + Math.abs(confirm);
+                country_confirmed_increased.setText(s);
+            }
+
+            if (recover > 0) {
+                String s = "+ " + recover;
+                country_recovered_increased.setText(s);
+            } else if (recover < 0) {
+                String s = "- " + Math.abs(recover);
+                country_recovered_increased.setText(s);
+            }
+
+            if (death > 0) {
+                String s = "+ " + death;
+                country_dead_increased.setText(s);
+            } else if (death < 0) {
+                String s = "- " + Math.abs(death);
+                country_dead_increased.setText(s);
+            }
+
+
+            country_confirmed_current.setText(String.valueOf(totalCount.getConfirmed()));
+            country_active_current.setText(String.valueOf(totalCount.getActive()));
+            country_recovered_current.setText(String.valueOf(totalCount.getRecovered()));
+            country_dead_current.setText(String.valueOf(totalCount.getDeaths()));
+
+
+        }
+    */
 
     private void setTextFont() {
         TextView confirmed = findViewById(R.id.country_confirmed_status);
@@ -290,7 +438,7 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
     }
 
     @Override
-    public void onClick(int position, Statewise statewise, View view) {
+    public void onClick(int position, States statewise, View view) {
         statewise.setExpanded(!statewise.isExpanded());
 
         if (!searchView.isIconified()) {
@@ -304,25 +452,32 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
     private void hideKeyboard() {
         InputMethodManager inputManager = (InputMethodManager) Objects.requireNonNull(context).getSystemService(
                 Context.INPUT_METHOD_SERVICE);
-        View focusedView = Objects.requireNonNull(getCurrentFocus());
-        if (focusedView != null) {
-            if (inputManager != null) {
-                inputManager.hideSoftInputFromWindow(focusedView.getWindowToken(),
-                        InputMethodManager.HIDE_NOT_ALWAYS);
+        try {
+            View focusedView = Objects.requireNonNull(getCurrentFocus());
+            if (focusedView != null) {
+                if (inputManager != null) {
+                    inputManager.hideSoftInputFromWindow(focusedView.getWindowToken(),
+                            InputMethodManager.HIDE_NOT_ALWAYS);
+                }
             }
+        } catch (Exception e) {
+            Log.e(TAG, "hideKeyboard: ", e);
         }
+
     }
 
-    private String daysLeft(String date) {
+    private String timeAgo(String date) {
         int day = 0;
         int hh = 0;
         int mm = 0;
+
         try {
-            @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss zz yyyy");
+
+            @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
             Date oldDate = dateFormat.parse(date);
             Date cDate = new Date();
             assert oldDate != null;
-            long timeDiff = oldDate.getTime() - cDate.getTime();
+            long timeDiff = cDate.getTime() - oldDate.getTime();
             day = (int) TimeUnit.MILLISECONDS.toDays(timeDiff);
             hh = (int) (TimeUnit.MILLISECONDS.toHours(timeDiff) - TimeUnit.DAYS.toHours(day));
             mm = (int) (TimeUnit.MILLISECONDS.toMinutes(timeDiff) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(timeDiff)));
@@ -334,14 +489,28 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
 
         if (mm <= 60 && hh != 0) {
             if (hh <= 60 && day != 0) {
-                return day + " Days left";
+                if (day == 1)
+                    return day + " DAY AGO";
+                return day + " DAYS AGO";
             } else {
-                return hh + " Hours left";
+                if (hh == 1)
+                    return hh + " HOUR AGO";
+                return hh + " HOURS AGO";
             }
         } else {
-            return mm + " Minutes left";
+            if (mm == 1)
+                return mm + " MINUTE AGO";
+            return mm + " MINUTES AGO";
         }
+
     }
 
+    public static class BackgroundProcessing extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            return null;
+        }
+    }
 
 }
