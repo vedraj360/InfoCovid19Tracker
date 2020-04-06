@@ -14,7 +14,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.vdx.infocovid19.Models.NewApiModels.Delta;
 import com.vdx.infocovid19.Models.NewApiModels.States;
 import com.vdx.infocovid19.R;
 import com.vdx.infocovid19.Utils.FontChangeCrawler;
@@ -49,7 +48,6 @@ public class StateAdapter extends RecyclerView.Adapter<StateAdapter.ViewHolder> 
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
 
         States statewise = statewiseArrayList.get(position);
-        Delta delta = statewise.getDelta();
 
         //holder.info_card.setAnimation(AnimationUtils.loadAnimation(context, R.anim.up_bottom_transition_animation));/
         holder.expandable_view.setAnimation(AnimationUtils.loadAnimation(context, R.anim.fade_transition_animation));
@@ -59,17 +57,17 @@ public class StateAdapter extends RecyclerView.Adapter<StateAdapter.ViewHolder> 
         boolean isExpanded = statewise.isExpanded();
         holder.expandable_view.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
 
-        if (holder.expandable_view.getVisibility() != View.VISIBLE) {
-            statewise.setExpanded(false);
-        }
-
         holder.confirmed_current.setText(String.valueOf(statewise.getConfirmed()));
         holder.active_current.setText(String.valueOf(statewise.getActive()));
         holder.recovered_current.setText(String.valueOf(statewise.getRecovered()));
         holder.dead_current.setText(String.valueOf(statewise.getDeaths()));
-        if (delta.getConfirmed() > 0) {
+
+        long confirmed = Long.parseLong(statewise.getDeltaconfirmed());
+
+
+        if (confirmed > 0) {
             holder.increased_image.setVisibility(View.VISIBLE);
-            holder.confirmed_increased.setText(String.valueOf(delta.getConfirmed()));
+            holder.confirmed_increased.setText(String.valueOf(confirmed));
         } else {
             holder.increased_image.setVisibility(View.GONE);
             holder.confirmed_increased.setText("");

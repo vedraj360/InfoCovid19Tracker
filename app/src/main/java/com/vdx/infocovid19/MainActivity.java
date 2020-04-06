@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
     private SearchView searchView;
     private ArrayList<History> history;
     private ArrayList<Statewise> currentDataList;
-    private LinearLayout main_anim;
+    private LinearLayout main_anim, loading_layout;
     private NestedScrollView scrollView;
     private PullRefreshLayout pullRefreshLayout;
 
@@ -93,8 +93,8 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
         main_anim = findViewById(R.id.main_anim);
         scrollView = findViewById(R.id.nested_scroll);
         pullRefreshLayout = findViewById(R.id.v_refresh);
-
         updated_time = findViewById(R.id.time);
+        loading_layout = findViewById(R.id.loading_layout);
     }
 
     private void setRecyclerView() {
@@ -138,11 +138,18 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
         StringRequest request = new StringRequest(Request.Method.GET, URLS.newApiData, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                Gson gson = new Gson();
-                modelAPI = gson.fromJson(response, ModelAPI.class);
-                statesArrayList = modelAPI.getState();
-                setTotalCount();
-                setRecyclerView();
+                try {
+                    loading_layout.setVisibility(View.GONE);
+                    Gson gson = new Gson();
+                    modelAPI = gson.fromJson(response, ModelAPI.class);
+                    statesArrayList = modelAPI.getState();
+                    setTotalCount();
+                    setRecyclerView();
+
+                } catch (Exception e) {
+                    Log.e(TAG, "onResponse: ", e);
+                }
+
             }
         }, new Response.ErrorListener() {
             @Override
@@ -156,22 +163,27 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
 
     private void getRefreshedResponse() {
         scrollView.setVisibility(View.GONE);
+        loading_layout.setVisibility(View.VISIBLE);
 
         StringRequest request = new StringRequest(Request.Method.GET, URLS.newApiData, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                Gson gson = new Gson();
-                modelAPI = gson.fromJson(response, ModelAPI.class);
-                statesArrayList = modelAPI.getState();
-                setTotalCount();
-                refreshedRecycler();
-
-
+                try {
+                    loading_layout.setVisibility(View.GONE);
+                    Gson gson = new Gson();
+                    modelAPI = gson.fromJson(response, ModelAPI.class);
+                    statesArrayList = modelAPI.getState();
+                    setTotalCount();
+                    refreshedRecycler();
+                } catch (Exception e) {
+                    Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show();
+                }
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.e(TAG, "onErrorResponse: ", error);
+                Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -189,7 +201,6 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
         stateAdapter = new StateAdapter(statesList, getApplicationContext(), this);
 
         stateAdapter.notifyDataSetChanged();
-
 
 
         handler.postDelayed(new Runnable() {
@@ -303,13 +314,11 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
     private void setTotalCount() {
 
         setTextFont();
-        ArrayList<KeyValue> keyValues = new ArrayList<>();
-        keyValues = modelAPI.getKeyValues();
         States state = statesArrayList.get(0);
 
-        long confirm = Long.parseLong(keyValues.get(0).getConfirmeddelta());
-        long recover = Long.parseLong(keyValues.get(0).getRecovereddelta());
-        long death = Long.parseLong(keyValues.get(0).getDeceaseddelta());
+        long confirm = Long.parseLong(state.getDeltaconfirmed());
+        long recover = Long.parseLong(state.getDeltarecovered());
+        long death = Long.parseLong(state.getDeltadeaths());
         String updatedTime = "LAST UPDATED " + timeAgo(state.getLastupdatedtime());
 
         if (confirm > 0) {

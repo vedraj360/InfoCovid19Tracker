@@ -15,9 +15,7 @@ public class States {
     @SerializedName("deaths")
     @Expose
     private String deaths;
-    @SerializedName("delta")
-    @Expose
-    private Delta delta;
+
     @SerializedName("lastupdatedtime")
     @Expose
     private String lastupdatedtime;
@@ -27,6 +25,42 @@ public class States {
     @SerializedName("state")
     @Expose
     private String state;
+
+    @SerializedName("deltaconfirmed")
+    @Expose
+    private String deltaconfirmed;
+
+    @SerializedName("deltadeaths")
+    @Expose
+    private String deltadeaths;
+
+    @SerializedName("deltarecovered")
+    @Expose
+    private String deltarecovered;
+
+    public String getDeltaconfirmed() {
+        return deltaconfirmed;
+    }
+
+    public void setDeltaconfirmed(String deltaconfirmed) {
+        this.deltaconfirmed = deltaconfirmed;
+    }
+
+    public String getDeltadeaths() {
+        return deltadeaths;
+    }
+
+    public void setDeltadeaths(String deltadeaths) {
+        this.deltadeaths = deltadeaths;
+    }
+
+    public String getDeltarecovered() {
+        return deltarecovered;
+    }
+
+    public void setDeltarecovered(String deltarecovered) {
+        this.deltarecovered = deltarecovered;
+    }
 
     private boolean isExpanded = false;
 
@@ -60,14 +94,6 @@ public class States {
 
     public void setDeaths(String deaths) {
         this.deaths = deaths;
-    }
-
-    public Delta getDelta() {
-        return delta;
-    }
-
-    public void setDelta(Delta delta) {
-        this.delta = delta;
     }
 
     public String getLastupdatedtime() {

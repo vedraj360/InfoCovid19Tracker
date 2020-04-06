@@ -40,6 +40,26 @@
 
     </LinearLayout>
 
+
+    <LinearLayout
+        android:id="@+id/loading_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="5dp"
+            android:fontFamily="@font/arsb"
+            android:gravity="center"
+            android:paddingEnd="5dp"
+            android:text="LOADING"
+            android:textSize="25sp" />
+
+    </LinearLayout>
+
+
     <com.baoyz.widget.PullRefreshLayout
         android:id="@+id/v_refresh"
         android:layout_width="match_parent"
