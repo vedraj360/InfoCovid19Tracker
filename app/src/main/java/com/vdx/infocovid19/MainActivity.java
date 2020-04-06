@@ -25,12 +25,10 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.baoyz.widget.PullRefreshLayout;
-import com.dinuscxj.refresh.RecyclerRefreshLayout;
 import com.google.gson.Gson;
 import com.vdx.infocovid19.Adapters.StateAdapter;
 import com.vdx.infocovid19.Models.History;
 import com.vdx.infocovid19.Models.HistoryModel;
-import com.vdx.infocovid19.Models.NewApiModels.KeyValue;
 import com.vdx.infocovid19.Models.NewApiModels.ModelAPI;
 import com.vdx.infocovid19.Models.NewApiModels.States;
 import com.vdx.infocovid19.Models.Statewise;
@@ -208,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
             public void run() {
                 recyclerView.setAdapter(stateAdapter);
             }
-        }, 100);
+        }, 200);
         new Thread(new Runnable() {
             @Override
             public void run() {
