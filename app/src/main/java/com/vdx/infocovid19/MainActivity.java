@@ -94,22 +94,7 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
         updated_time = findViewById(R.id.time);
         loading_layout = findViewById(R.id.loading_layout);
     }
-
-    private void setRecyclerView() {
-        main_anim.setVisibility(View.VISIBLE);
-        scrollView.setVisibility(View.VISIBLE);
-//        main_anim.setAnimation(AnimationUtils.loadAnimation(context, R.anim.up_bottom_transition_animation_d));
-        scrollView.setAnimation(AnimationUtils.loadAnimation(context, R.anim.up_bottom_transition_animation_d));
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-//        recyclerView.setHasFixedSize(true);
-        ArrayList<States> statesList = statesArrayList;
-        statesList.remove(0);
-        stateAdapter = new StateAdapter(statesList, getApplicationContext(), this);
-        recyclerView.setAdapter(stateAdapter);
-        pullRefreshLayout.setRefreshing(false);
-
-        search(searchView);
-    }
+// First refreshRecycle all the view
 
 
     private void refreshRecycler() {
@@ -130,6 +115,25 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
 
             }
         });
+    }
+
+
+    // After that set Recycler this view for batter and fast processing
+
+    private void setRecyclerView() {
+        main_anim.setVisibility(View.VISIBLE);
+        scrollView.setVisibility(View.VISIBLE);
+//        main_anim.setAnimation(AnimationUtils.loadAnimation(context, R.anim.up_bottom_transition_animation_d));
+        scrollView.setAnimation(AnimationUtils.loadAnimation(context, R.anim.up_bottom_transition_animation_d));
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+//        recyclerView.setHasFixedSize(true);
+        ArrayList<States> statesList = statesArrayList;
+        statesList.remove(0);
+        stateAdapter = new StateAdapter(statesList, getApplicationContext(), this);
+        recyclerView.setAdapter(stateAdapter);
+        pullRefreshLayout.setRefreshing(false);
+
+        search(searchView);
     }
 
     private void getResponse() {
@@ -159,35 +163,8 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
         VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 
-    private void getRefreshedResponse() {
-        scrollView.setVisibility(View.GONE);
-        loading_layout.setVisibility(View.VISIBLE);
 
-        StringRequest request = new StringRequest(Request.Method.GET, URLS.newApiData, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    loading_layout.setVisibility(View.GONE);
-                    Gson gson = new Gson();
-                    modelAPI = gson.fromJson(response, ModelAPI.class);
-                    statesArrayList = modelAPI.getState();
-                    setTotalCount();
-                    refreshedRecycler();
-                } catch (Exception e) {
-                    Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e(TAG, "onErrorResponse: ", error);
-                Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        VolleySingleton.getInstance(this).addToRequestQueue(request);
-    }
-
+//    improve fast processing
     private void refreshedRecycler() {
         Toast.makeText(context, "REFRESHED", Toast.LENGTH_SHORT).show();
         final Handler handler = new Handler();
@@ -214,6 +191,36 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
             }
         }).start();
 
+    }
+// GET value after Response
+
+     private void getRefreshedResponse() {
+        scrollView.setVisibility(View.GONE);
+        loading_layout.setVisibility(View.VISIBLE);
+
+        StringRequest request = new StringRequest(Request.Method.GET, URLS.newApiData, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    loading_layout.setVisibility(View.GONE);
+                    Gson gson = new Gson();
+                    modelAPI = gson.fromJson(response, ModelAPI.class);
+                    statesArrayList = modelAPI.getState();
+                    setTotalCount();
+                    refreshedRecycler();
+                } catch (Exception e) {
+                    Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e(TAG, "onErrorResponse: ", error);
+                Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        VolleySingleton.getInstance(this).addToRequestQueue(request);
     }
 
     private void getHistoryResponse() {
@@ -391,25 +398,8 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
 
         }
     */
-
-    private void setTextFont() {
-        TextView confirmed = findViewById(R.id.country_confirmed_status);
-        TextView active = findViewById(R.id.country_active_status);
-        TextView recovered = findViewById(R.id.country_recovered_status);
-        TextView dead = findViewById(R.id.country_dead_status);
-
-        confirmed.setTypeface(Helper.getFontSb(context));
-        active.setTypeface(Helper.getFontSb(context));
-        recovered.setTypeface(Helper.getFontSb(context));
-        dead.setTypeface(Helper.getFontSb(context));
-        country_confirmed_current.setTypeface(Helper.getFontSb(context));
-        country_active_current.setTypeface(Helper.getFontSb(context));
-        country_recovered_current.setTypeface(Helper.getFontSb(context));
-        country_dead_current.setTypeface(Helper.getFontSb(context));
-
-    }
-
-    private void search(SearchView searchView) {
+    // starting search
+      private void search(SearchView searchView) {
         searchView.setOnCloseListener(new SearchView.OnCloseListener() {
             @Override
             public boolean onClose() {
@@ -434,6 +424,25 @@ public class MainActivity extends AppCompatActivity implements StateAdapter.setO
         });
     }
 
+// function calling
+    private void setTextFont() {
+        TextView confirmed = findViewById(R.id.country_confirmed_status);
+        TextView active = findViewById(R.id.country_active_status);
+        TextView recovered = findViewById(R.id.country_recovered_status);
+        TextView dead = findViewById(R.id.country_dead_status);
+
+        confirmed.setTypeface(Helper.getFontSb(context));
+        active.setTypeface(Helper.getFontSb(context));
+        recovered.setTypeface(Helper.getFontSb(context));
+        dead.setTypeface(Helper.getFontSb(context));
+        country_confirmed_current.setTypeface(Helper.getFontSb(context));
+        country_active_current.setTypeface(Helper.getFontSb(context));
+        country_recovered_current.setTypeface(Helper.getFontSb(context));
+        country_dead_current.setTypeface(Helper.getFontSb(context));
+
+    }
+
+  
     @Override
     public void onBackPressed() {
         if (!searchView.isIconified()) {
